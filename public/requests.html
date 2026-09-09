@@ -27,18 +27,26 @@
             <div class="tabs" role="tablist" data-testid="request-tabs">
               <button class="tab-btn active" type="button" data-tab="tab-new" data-testid="tab-new">New request</button>
               <button class="tab-btn" type="button" data-tab="tab-list" data-testid="tab-list">My requests</button>
+              <button class="tab-btn" type="button" data-tab="tab-board" data-testid="tab-board">Board</button>
+              <button class="tab-btn" type="button" data-tab="tab-calendar" data-testid="tab-calendar">Calendar</button>
             </div>
 
             <div id="tab-new" class="tab-panel active panel-body" data-testid="panel-new">
               <form id="request-form" data-testid="request-form" novalidate>
                 <div class="grid-2">
                   <div class="field">
-                    <label for="title">Title</label>
+                    <label class="label-with-tip" for="title">
+                      Title
+                      <button type="button" class="tooltip-trigger" data-tooltip="Keep it short — reviewers see this in the board and inbox." data-tooltip-testid="tooltip-request-title" data-testid="tip-request-title" aria-label="About title">?</button>
+                    </label>
                     <input id="title" name="title" type="text" placeholder="Short summary" data-testid="request-title" />
                     <div class="field-error" data-field-error="title" data-testid="title-error"></div>
                   </div>
                   <div class="field">
-                    <label for="type">Type</label>
+                    <label class="label-with-tip" for="type">
+                      Type
+                      <button type="button" class="tooltip-trigger" data-tooltip="Leave shows a date range; past dates are disabled." data-tooltip-testid="tooltip-request-type" data-testid="tip-request-type" aria-label="About type">?</button>
+                    </label>
                     <select id="type" name="type" data-testid="request-type">
                       <option value="">Select type</option>
                       <option value="Leave">Leave</option>
@@ -50,19 +58,42 @@
                   </div>
                 </div>
 
-                <div class="grid-2">
+                <div class="grid-2" id="needed-by-row">
                   <div class="field">
                     <label for="startDate">Needed by</label>
                     <input id="startDate" name="startDate" type="date" data-testid="request-date" />
                   </div>
                   <div class="field">
-                    <label>Priority</label>
+                    <label class="label-with-tip">
+                      Priority
+                      <button type="button" class="tooltip-trigger" data-tooltip="High priority surfaces on the home dashboard first." data-tooltip-testid="tooltip-request-priority" data-testid="tip-request-priority" aria-label="About priority">?</button>
+                    </label>
                     <div class="radio-row" data-testid="priority-group">
                       <label><input type="radio" name="priority" value="low" data-testid="priority-low" /> Low</label>
                       <label><input type="radio" name="priority" value="normal" checked data-testid="priority-normal" /> Normal</label>
                       <label><input type="radio" name="priority" value="high" data-testid="priority-high" /> High</label>
                     </div>
                   </div>
+                </div>
+
+                <div id="leave-range" class="grid-2 date-range hidden" data-testid="leave-range">
+                  <div class="field">
+                    <label for="leaveStart">Leave start</label>
+                    <input id="leaveStart" name="leaveStart" type="date" data-testid="leave-start" />
+                    <div class="field-error" data-field-error="leaveStart" data-testid="leave-start-error"></div>
+                  </div>
+                  <div class="field">
+                    <label for="leaveEnd">Leave end</label>
+                    <input id="leaveEnd" name="leaveEnd" type="date" data-testid="leave-end" />
+                    <div class="field-error" data-field-error="leaveEnd" data-testid="leave-end-error"></div>
+                  </div>
+                </div>
+
+                <div class="field" id="tags-field" data-testid="tags-field">
+                  <label>Tags</label>
+                  <input type="hidden" name="tags" id="tags-hidden" value="" />
+                  <div data-chip-list class="chip-list" data-testid="chip-list"></div>
+                  <p class="hint">Select one or more tags for routing.</p>
                 </div>
 
                 <div class="field">
@@ -90,11 +121,25 @@
             <div id="tab-list" class="tab-panel panel-body" data-testid="panel-list">
               <div id="request-list" data-testid="request-list"></div>
             </div>
+
+            <div id="tab-board" class="tab-panel panel-body" data-testid="panel-board">
+              <p class="hint" style="margin-top: 0">
+                Drag cards between columns to update status.
+                <button type="button" class="tooltip-trigger" data-tooltip="Drop a card on a column to change its workflow status. Undo appears in the toast." data-tooltip-testid="tooltip-kanban" data-testid="tip-kanban" aria-label="About board">?</button>
+              </p>
+              <div id="kanban-skeleton" data-testid="kanban-skeleton-host"></div>
+              <div id="kanban-board" class="kanban hidden" data-testid="kanban-board"></div>
+            </div>
+
+            <div id="tab-calendar" class="tab-panel panel-body" data-testid="panel-calendar">
+              <div id="leave-calendar" data-testid="leave-calendar-host"></div>
+            </div>
           </section>
         </main>
       </div>
     </div>
     <script src="/js/store.js"></script>
+    <script src="/js/widgets.js"></script>
     <script src="/js/shell.js"></script>
     <script src="/js/app.js"></script>
   </body>

@@ -71,7 +71,18 @@
       </div>
     </div>
 
+    <div id="preview-backdrop" class="modal-backdrop" data-testid="preview-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" data-testid="preview-modal" style="width: min(520px, 100%)">
+        <h3 id="preview-title" data-testid="preview-title">Preview</h3>
+        <div id="preview-body" class="preview-frame" data-testid="preview-body"></div>
+        <div class="actions" style="margin-top: 1rem">
+          <button id="close-preview" class="secondary" type="button" data-testid="close-preview">Close</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/js/store.js"></script>
+    <script src="/js/widgets.js"></script>
     <script src="/js/shell.js"></script>
     <script src="/js/app.js"></script>
   </body>

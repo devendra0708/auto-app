@@ -38,9 +38,9 @@
                 </div>
                 <p id="detail-details" class="lede-inline" data-testid="detail-details"></p>
                 <div class="actions" style="margin-top: 1rem">
-                  <button id="approve-request" type="button" data-testid="approve-request">Approve</button>
-                  <button id="reject-request" class="danger" type="button" data-testid="reject-request">Reject</button>
-                  <button id="cancel-request" class="secondary" type="button" data-testid="cancel-request">Cancel</button>
+                  <button id="approve-request" class="approver-only" type="button" data-testid="approve-request">Approve</button>
+                  <button id="reject-request" class="danger approver-only" type="button" data-testid="reject-request">Reject</button>
+                  <button id="cancel-request" class="secondary approver-only" type="button" data-testid="cancel-request">Cancel</button>
                 </div>
               </div>
             </section>
@@ -84,6 +84,7 @@
       </div>
     </div>
     <script src="/js/store.js"></script>
+    <script src="/js/widgets.js"></script>
     <script src="/js/shell.js"></script>
     <script src="/js/app.js"></script>
   </body>

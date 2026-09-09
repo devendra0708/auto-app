@@ -10,8 +10,9 @@
     return Array.from(root.querySelectorAll(selector));
   }
 
-  function showToast(message) {
-    if (UI.showToast) UI.showToast(message);
+  function showToast(message, options) {
+    if (UI.showToast) return UI.showToast(message, options);
+    if (window.MeridianWidgets?.showToast) return window.MeridianWidgets.showToast(message, options);
   }
 
   function initials(name) {
@@ -86,8 +87,9 @@
       }
       if (!valid) return;
 
-      if (email === M.USER.email && password === M.USER.password) {
-        M.login(Boolean(remember));
+      const account = M.findAccount(email, password);
+      if (account) {
+        M.login(Boolean(remember), account);
         if (remember) M.setRememberedEmail(email);
         else M.setRememberedEmail("");
         window.location.href = "/home.html";
@@ -102,6 +104,7 @@
   function initHome() {
     if (document.body.dataset.page !== "home") return;
 
+    const W = window.MeridianWidgets;
     const requests = M.getRequests();
     const people = M.getPeople();
     const pending = requests.filter((r) => r.status === "pending" || r.status === "submitted").length;
@@ -110,14 +113,48 @@
     $("#stat-files").textContent = String(M.getFiles().length);
 
     const settings = M.getSettings();
-    const first = (settings.fullName || M.USER.name).split(" ")[0];
+    const session = M.getSessionUser();
+    const first = (session.name || settings.fullName || M.USER.name).split(" ")[0];
     if ($("#home-title")) $("#home-title").textContent = `Welcome back, ${first}`;
+
+    const statusKeys = ["submitted", "pending", "approved", "rejected", "cancelled"];
+    const statusCounts = statusKeys.map((key) => ({
+      key,
+      label: key,
+      value: requests.filter((r) => r.status === key).length,
+    }));
+    const deptMap = {};
+    people.forEach((p) => {
+      deptMap[p.dept] = (deptMap[p.dept] || 0) + 1;
+    });
+    const deptItems = Object.entries(deptMap).map(([label, value]) => ({
+      key: label.toLowerCase().replace(/\s+/g, "-"),
+      label,
+      value,
+    }));
+
+    W?.showSkeleton($("#chart-requests"), "chart");
+    W?.showSkeleton($("#chart-departments"), "chart");
+    setTimeout(() => {
+      W?.renderBarChart($("#chart-requests"), {
+        title: "Requests by status",
+        items: statusCounts,
+        testId: "chart-requests",
+      });
+      W?.renderDonutChart($("#chart-departments"), {
+        title: "People by department",
+        items: deptItems,
+        testId: "chart-departments",
+      });
+    }, 600);
+
+    W?.initTooltips();
 
     const feed = $("#activity-feed");
     if (!feed) return;
 
-    const items = [
-      ...requests.slice(0, 3).map((r) => ({
+    const allItems = [
+      ...requests.map((r) => ({
         title: r.title,
         body: `${r.type} · ${r.status}`,
         time: r.createdAt,
@@ -133,11 +170,30 @@
         href: "/people.html",
         testid: "feed-directory",
       },
+      {
+        title: "Policy refreshed",
+        body: "Travel guidelines published",
+        time: "Yesterday",
+        icon: "F",
+        href: "/settings.html",
+        testid: "feed-policy",
+      },
+      {
+        title: "Ops report ready",
+        body: "Monthly summary available",
+        time: "2d ago",
+        icon: "S",
+        href: "/reports.html",
+        testid: "feed-report",
+      },
     ];
 
-    feed.innerHTML = items
-      .map(
-        (item) => `
+    let visible = 3;
+    function renderFeed() {
+      const slice = allItems.slice(0, visible);
+      feed.innerHTML = slice
+        .map(
+          (item) => `
         <a class="feed-item feed-link" href="${item.href}" data-testid="${item.testid}">
           <div class="avatar">${item.icon}</div>
           <div>
@@ -146,8 +202,20 @@
           </div>
           <time>${item.time}</time>
         </a>`
-      )
-      .join("");
+        )
+        .join("");
+      const btn = $("#activity-load-more");
+      if (btn) {
+        btn.disabled = visible >= allItems.length;
+        btn.textContent = visible >= allItems.length ? "All caught up" : "Load more";
+      }
+    }
+
+    $("#activity-load-more")?.addEventListener("click", () => {
+      visible = Math.min(allItems.length, visible + 2);
+      renderFeed();
+    });
+    renderFeed();
   }
 
   function initPeople() {
@@ -228,7 +296,9 @@
               <td data-testid="person-dept-${p.id}">${p.dept}</td>
               <td data-testid="person-role-${p.id}">${p.role}</td>
               <td data-testid="person-location-${p.id}">${p.location}</td>
-              <td><span class="badge ${p.status}" data-testid="person-status-${p.id}">${p.status}</span></td>
+              <td>
+                <meridian-status-badge status="${p.status}" label="${p.status}" data-testid="person-status-${p.id}"></meridian-status-badge>
+              </td>
               <td>
                 <a class="btn secondary" href="/person.html?id=${p.id}" data-testid="view-person-${p.id}">View</a>
               </td>
@@ -260,6 +330,35 @@
         row.addEventListener("click", () => {
           window.location.href = row.dataset.href;
         });
+        row.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+          const id = Number(row.dataset.href.split("id=")[1]);
+          const person = M.getPerson(id);
+          window.MeridianWidgets?.showContextMenu(event.clientX, event.clientY, [
+            {
+              id: "open",
+              label: "Open profile",
+              action: () => {
+                window.location.href = `/person.html?id=${id}`;
+              },
+            },
+            {
+              id: "message",
+              label: "Message",
+              action: () => {
+                window.location.href = `/person.html?id=${id}`;
+              },
+            },
+            {
+              id: "copy",
+              label: "Copy email",
+              action: () => {
+                navigator.clipboard?.writeText(person?.email || "");
+                showToast(`Copied ${person?.email || ""}`);
+              },
+            },
+          ]);
+        });
       });
     }
 
@@ -272,11 +371,35 @@
       }, 350);
     }
 
-    search?.addEventListener("input", () => {
-      state.query = search.value.trim();
-      state.page = 1;
-      scheduleRender();
-    });
+    const comboRoot = $("#people-combobox");
+    const comboList = $("#people-combobox-list");
+    if (comboRoot && search && comboList && window.MeridianWidgets) {
+      const options = M.getPeople().map((p) => ({
+        id: p.id,
+        label: p.name,
+        meta: `${p.email} · ${p.role}`,
+      }));
+      window.MeridianWidgets.initCombobox({
+        root: comboRoot,
+        input: search,
+        listbox: comboList,
+        options,
+        onFilter: (query) => {
+          state.query = query.trim();
+          state.page = 1;
+          scheduleRender();
+        },
+        onSelect: (opt) => {
+          window.location.href = `/person.html?id=${opt.id}`;
+        },
+      });
+    } else {
+      search?.addEventListener("input", () => {
+        state.query = search.value.trim();
+        state.page = 1;
+        scheduleRender();
+      });
+    }
     statusFilter?.addEventListener("change", () => {
       state.status = statusFilter.value;
       state.page = 1;
@@ -288,7 +411,8 @@
       scheduleRender();
     });
     $all("th[data-sort]").forEach((th) => {
-      th.addEventListener("click", () => {
+      th.addEventListener("click", (event) => {
+        if (event.target.closest(".tooltip-trigger")) return;
         const key = th.dataset.sort;
         if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
         else {
@@ -321,6 +445,8 @@
       }
       showToast(`Exported ${state.selected.size} profile(s)`);
     });
+
+    window.MeridianWidgets?.initTooltips();
 
     const backdrop = $("#invite-backdrop");
     $("#open-invite")?.addEventListener("click", () => backdrop?.classList.add("open"));
@@ -359,23 +485,271 @@
     list.innerHTML = rows
       .map(
         (r) => `
-        <a class="file-row file-link" href="/request.html?id=${encodeURIComponent(r.id)}" data-testid="request-row-${r.id}">
-          <div class="file-meta">
+        <div class="file-row" data-testid="request-row-${r.id}" data-id="${r.id}">
+          <a class="file-meta file-link" href="/request.html?id=${encodeURIComponent(r.id)}" style="flex:1;min-width:0">
             <div class="file-icon">${r.type.slice(0, 3).toUpperCase()}</div>
             <div>
               <strong data-testid="request-title-${r.id}">${r.title}</strong>
-              <div class="hint">${r.id} · ${r.requester} · ${r.createdAt}</div>
+              <div class="hint">${r.id} · ${r.requester} · ${r.createdAt}${(r.tags || []).length ? " · " + r.tags.join(", ") : ""}</div>
             </div>
-          </div>
-          <span class="badge ${r.status}" data-testid="request-status-${r.id}">${r.status}</span>
-        </a>`
+          </a>
+          <meridian-status-badge status="${r.status}" label="${r.status}" data-testid="request-status-${r.id}"></meridian-status-badge>
+        </div>`
       )
       .join("");
+
+    $all("[data-id]", list).forEach((row) => {
+      row.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        const id = row.dataset.id;
+        window.MeridianWidgets?.showContextMenu(event.clientX, event.clientY, [
+            {
+              id: "open",
+              label: "Open request",
+              action: () => {
+                window.location.href = `/request.html?id=${encodeURIComponent(id)}`;
+              },
+            },
+            ...(M.canApprove()
+              ? [
+                  {
+                    id: "approve",
+                    label: "Approve",
+                    action: () => {
+                      const prev = M.getRequest(id)?.status;
+                      M.updateRequest(id, { status: "approved" });
+                      renderRequestList();
+                      renderKanban();
+                      renderCalendar();
+                      showToast(`${id} approved`, {
+                        undo: () => {
+                          M.updateRequest(id, { status: prev });
+                          renderRequestList();
+                          renderKanban();
+                          renderCalendar();
+                        },
+                      });
+                    },
+                  },
+                  {
+                    id: "reject",
+                    label: "Reject",
+                    danger: true,
+                    action: () => {
+                      const prev = M.getRequest(id)?.status;
+                      M.updateRequest(id, { status: "rejected" });
+                      renderRequestList();
+                      renderKanban();
+                      renderCalendar();
+                      showToast(`${id} rejected`, {
+                        undo: () => {
+                          M.updateRequest(id, { status: prev });
+                          renderRequestList();
+                          renderKanban();
+                          renderCalendar();
+                        },
+                      });
+                    },
+                  },
+                ]
+              : []),
+          ]);
+      });
+    });
+  }
+
+  function renderKanban() {
+    const board = $("#kanban-board");
+    if (!board) return;
+    const columns = ["submitted", "pending", "approved", "rejected", "cancelled"];
+    const rows = M.getRequests();
+
+    board.innerHTML = columns
+      .map((status) => {
+        const cards = rows.filter((r) => r.status === status);
+        const cardsHtml =
+          cards.length === 0
+            ? `<div class="kanban-empty" data-testid="kanban-empty-${status}">No cards</div>`
+            : cards
+                .map(
+                  (r) => `
+              <article
+                class="kanban-card"
+                ${M.canApprove() ? 'draggable="true"' : ""}
+                data-id="${r.id}"
+                data-testid="kanban-card-${r.id}"
+              >
+                <h3>${r.title}</h3>
+                <p>${r.id} · ${r.type}</p>
+                <a href="/request.html?id=${encodeURIComponent(r.id)}" data-testid="kanban-link-${r.id}">Open</a>
+              </article>`
+                )
+                .join("");
+
+        return `
+          <div class="kanban-column" data-status="${status}" data-testid="kanban-column-${status}">
+            <div class="kanban-column-header">
+              <span>${status}</span>
+              <span class="kanban-count" data-testid="kanban-count-${status}">${cards.length}</span>
+            </div>
+            <div class="kanban-cards" data-testid="kanban-cards-${status}">${cardsHtml}</div>
+          </div>`;
+      })
+      .join("");
+
+    let dragId = null;
+    if (M.canApprove()) {
+      $all(".kanban-card", board).forEach((card) => {
+        card.addEventListener("dragstart", (event) => {
+          dragId = card.dataset.id;
+          card.classList.add("dragging");
+          event.dataTransfer.setData("text/plain", dragId);
+          event.dataTransfer.effectAllowed = "move";
+        });
+        card.addEventListener("dragend", () => card.classList.remove("dragging"));
+        card.querySelector("a")?.addEventListener("click", (event) => event.stopPropagation());
+        card.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+          const id = card.dataset.id;
+          window.MeridianWidgets?.showContextMenu(event.clientX, event.clientY, [
+            {
+              id: "open",
+              label: "Open",
+              action: () => {
+                window.location.href = `/request.html?id=${encodeURIComponent(id)}`;
+              },
+            },
+          ]);
+        });
+      });
+
+      $all(".kanban-column", board).forEach((column) => {
+        const dropZone = column.querySelector(".kanban-cards");
+        const onDragOver = (event) => {
+          event.preventDefault();
+          column.classList.add("drag-over");
+        };
+        const onDragLeave = () => column.classList.remove("drag-over");
+        const onDrop = (event) => {
+          event.preventDefault();
+          column.classList.remove("drag-over");
+          const id = event.dataTransfer.getData("text/plain") || dragId;
+          const nextStatus = column.dataset.status;
+          if (!id || !nextStatus) return;
+          const current = M.getRequest(id);
+          if (!current || current.status === nextStatus) return;
+          const prev = current.status;
+          M.updateRequest(id, { status: nextStatus });
+          showToast(`${id} → ${nextStatus}`, {
+            undo: () => {
+              M.updateRequest(id, { status: prev });
+              renderKanban();
+              renderRequestList();
+              renderCalendar();
+            },
+          });
+          renderKanban();
+          renderRequestList();
+          renderCalendar();
+        };
+        column.addEventListener("dragover", onDragOver);
+        dropZone?.addEventListener("dragover", onDragOver);
+        column.addEventListener("dragleave", onDragLeave);
+        column.addEventListener("drop", onDrop);
+        dropZone?.addEventListener("drop", onDrop);
+      });
+    } else {
+      $all(".kanban-card a", board).forEach((link) => {
+        link.addEventListener("click", (event) => event.stopPropagation());
+      });
+    }
+  }
+
+  let calendarCursor = new Date();
+
+  function renderCalendar() {
+    const host = $("#leave-calendar");
+    if (!host || !window.MeridianWidgets) return;
+    const year = calendarCursor.getFullYear();
+    const month = calendarCursor.getMonth();
+    const events = M.getRequests()
+      .filter((r) => r.type === "Leave")
+      .map((r) => ({
+        id: r.id,
+        title: r.title,
+        date: r.leaveStart || r.startDate,
+        start: r.leaveStart || r.startDate,
+        end: r.leaveEnd || r.startDate,
+      }))
+      .filter((e) => e.start);
+
+    window.MeridianWidgets.renderMonthCalendar(host, { year, month, events, testId: "leave-calendar" });
+    host.querySelector('[data-cal-nav="prev"]')?.addEventListener("click", () => {
+      calendarCursor = new Date(year, month - 1, 1);
+      renderCalendar();
+    });
+    host.querySelector('[data-cal-nav="next"]')?.addEventListener("click", () => {
+      calendarCursor = new Date(year, month + 1, 1);
+      renderCalendar();
+    });
+    host.querySelectorAll(".cal-event").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        window.location.href = `/request.html?id=${encodeURIComponent(btn.dataset.id)}`;
+      });
+    });
   }
 
   function initRequests() {
     if (document.body.dataset.page !== "requests") return;
+    const W = window.MeridianWidgets;
     renderRequestList();
+    renderCalendar();
+    W?.initTooltips();
+
+    const skeletonHost = $("#kanban-skeleton");
+    const board = $("#kanban-board");
+    W?.showSkeleton(skeletonHost, "kanban");
+    board?.classList.add("hidden");
+    setTimeout(() => {
+      skeletonHost?.classList.add("hidden");
+      board?.classList.remove("hidden");
+      renderKanban();
+    }, 700);
+
+    const today = new Date().toISOString().slice(0, 10);
+    ["#startDate", "#leaveStart", "#leaveEnd"].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.min = today;
+    });
+
+    const chipApi = W?.initChipSelect($("#tags-field"), {
+      options: ["Urgent", "Compliance", "Hardware", "Travel", "Security"],
+      name: "tags",
+    });
+
+    function syncLeaveRange() {
+      const type = $("#type")?.value;
+      const range = $("#leave-range");
+      const needed = $("#needed-by-row");
+      if (type === "Leave") {
+        range?.classList.remove("hidden");
+        if (needed) needed.querySelector("#startDate")?.closest(".field")?.classList.add("hidden");
+      } else {
+        range?.classList.add("hidden");
+        if (needed) needed.querySelector("#startDate")?.closest(".field")?.classList.remove("hidden");
+      }
+    }
+
+    $("#type")?.addEventListener("change", syncLeaveRange);
+    syncLeaveRange();
+
+    $("#leaveStart")?.addEventListener("change", () => {
+      const start = $("#leaveStart").value;
+      if ($("#leaveEnd")) {
+        $("#leaveEnd").min = start || today;
+        if ($("#leaveEnd").value && $("#leaveEnd").value < start) $("#leaveEnd").value = start;
+      }
+    });
 
     $all(".tab-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -383,6 +757,8 @@
         $all(".tab-panel").forEach((p) => p.classList.remove("active"));
         btn.classList.add("active");
         $(`#${btn.dataset.tab}`)?.classList.add("active");
+        if (btn.dataset.tab === "tab-calendar") renderCalendar();
+        if (btn.dataset.tab === "tab-board") renderKanban();
       });
     });
 
@@ -396,6 +772,9 @@
       const priority = String(data.get("priority") || "normal");
       const details = String(data.get("details") || "").trim();
       const startDate = String(data.get("startDate") || "");
+      const leaveStart = String(data.get("leaveStart") || "");
+      const leaveEnd = String(data.get("leaveEnd") || "");
+      const tags = chipApi?.getSelected?.() || [];
       const terms = data.get("terms") === "on";
 
       let valid = true;
@@ -406,6 +785,19 @@
       if (!type) {
         setFieldError(form, "type", "Select a request type");
         valid = false;
+      }
+      if (type === "Leave") {
+        if (!leaveStart) {
+          setFieldError(form, "leaveStart", "Start date is required");
+          valid = false;
+        }
+        if (!leaveEnd) {
+          setFieldError(form, "leaveEnd", "End date is required");
+          valid = false;
+        } else if (leaveStart && leaveEnd < leaveStart) {
+          setFieldError(form, "leaveEnd", "End must be on or after start");
+          valid = false;
+        }
       }
       if (!terms) {
         setFieldError(form, "terms", "You must confirm policy compliance");
@@ -424,19 +816,26 @@
           id,
           type,
           title,
-          requester: M.getSettings().fullName || M.USER.name,
+          requester: M.getSessionUser().name || M.getSettings().fullName || M.USER.name,
           status: "submitted",
           createdAt: new Date().toISOString().slice(0, 10),
           priority,
           details,
-          startDate,
+          startDate: type === "Leave" ? leaveStart : startDate,
+          leaveStart: type === "Leave" ? leaveStart : undefined,
+          leaveEnd: type === "Leave" ? leaveEnd : undefined,
+          tags,
           history: [{ at: new Date().toISOString().slice(0, 10), action: "submitted" }],
         });
         form.reset();
+        chipApi?.clear?.();
         clearFieldErrors(form);
+        syncLeaveRange();
         submitBtn.disabled = false;
         loader?.classList.add("hidden");
         renderRequestList();
+        renderKanban();
+        renderCalendar();
         $("#request-success").textContent = `${id} submitted successfully.`;
         $("#request-success").classList.add("visible");
         showToast("Request submitted");
@@ -449,7 +848,9 @@
 
     $("#reset-request")?.addEventListener("click", () => {
       form?.reset();
+      chipApi?.clear?.();
       clearFieldErrors(form);
+      syncLeaveRange();
       $("#request-success")?.classList.remove("visible");
     });
   }
@@ -487,13 +888,27 @@
       .map((h) => `<li data-testid="history-item"><strong>${h.action}</strong> · ${h.at}</li>`)
       .join("");
 
-    const actionable = ["pending", "submitted"].includes(request.status);
-    const canCancel = actionable || request.status === "approved";
+    const actionable = ["pending", "submitted"].includes(request.status) && M.canApprove();
+    const canCancel = M.canApprove() && (["pending", "submitted"].includes(request.status) || request.status === "approved");
     $("#approve-request").disabled = !actionable;
     $("#reject-request").disabled = !actionable;
     $("#cancel-request").disabled = !canCancel;
+    if (!M.canApprove()) {
+      $("#approve-request")?.classList.add("approver-only");
+      $("#reject-request")?.classList.add("approver-only");
+      $("#cancel-request")?.classList.add("approver-only");
+      const banner = document.createElement("div");
+      banner.className = "role-banner";
+      banner.setAttribute("data-testid", "viewer-readonly-banner");
+      banner.textContent = "Viewer role: you can open requests but cannot approve, reject, or cancel.";
+      detail?.prepend(banner);
+    }
 
     function applyStatus(status, message) {
+      if (!M.canApprove()) {
+        showToast("Viewer role cannot change request status");
+        return;
+      }
       M.updateRequest(request.id, { status });
       showToast(message);
       window.location.reload();
@@ -531,7 +946,18 @@
     $("#person-joined").textContent = person.joined || "—";
     $("#person-about").textContent = person.about || "";
     $("#person-status").textContent = person.status;
-    $("#person-status").className = `badge ${person.status}`;
+    // Replace plain badge with shadow badge if present
+    const statusHost = $("#person-status");
+    if (statusHost && statusHost.tagName !== "MERIDIAN-STATUS-BADGE") {
+      const badge = document.createElement("meridian-status-badge");
+      badge.setAttribute("status", person.status);
+      badge.setAttribute("label", person.status);
+      badge.setAttribute("data-testid", "person-status");
+      statusHost.replaceWith(badge);
+    } else if (statusHost) {
+      statusHost.setAttribute("status", person.status);
+      statusHost.setAttribute("label", person.status);
+    }
 
     function renderMessages() {
       const list = $("#message-list");
@@ -592,7 +1018,10 @@
               <div class="hint">${f.size} · Updated ${f.updated}</div>
             </div>
           </div>
-          <button class="secondary" type="button" data-action="delete-file" data-id="${f.id}" data-testid="delete-file-${f.id}">Remove</button>
+          <div class="actions" style="margin:0">
+            <button class="secondary" type="button" data-action="preview-file" data-id="${f.id}" data-testid="preview-file-${f.id}">Preview</button>
+            <button class="secondary approver-only" type="button" data-action="delete-file" data-id="${f.id}" data-testid="delete-file-${f.id}">Remove</button>
+          </div>
         </div>`
       )
       .join("");
@@ -604,6 +1033,23 @@
         $("#confirm-file-name").textContent = file?.name || "this file";
         $("#confirm-delete-backdrop").dataset.fileId = fileId;
         $("#confirm-delete-backdrop").classList.add("open");
+      });
+    });
+
+    $all('[data-action="preview-file"]', list).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const file = M.getFiles().find((f) => f.id === btn.dataset.id);
+        if (!file) return;
+        $("#preview-title").textContent = file.name;
+        const body = $("#preview-body");
+        if (file.type === "PNG") {
+          body.innerHTML = `<div data-testid="preview-image-stub"><div style="width:160px;height:100px;margin:0 auto 0.75rem;border-radius:8px;background:linear-gradient(135deg,#cfe8df,#9ec9ef)"></div><p>Image preview stub for ${file.name}</p></div>`;
+        } else if (file.type === "PDF") {
+          body.innerHTML = `<div data-testid="preview-pdf-stub"><p><strong>PDF preview</strong></p><p>Page 1 of ${file.name}</p><p class="hint">Stub renderer for automation</p></div>`;
+        } else {
+          body.innerHTML = `<div data-testid="preview-doc-stub"><p><strong>Document preview</strong></p><p>${file.name}</p><p class="hint">${file.size}</p></div>`;
+        }
+        $("#preview-backdrop")?.classList.add("open");
       });
     });
   }
@@ -675,13 +1121,26 @@
     $("#cancel-delete")?.addEventListener("click", () => backdrop?.classList.remove("open"));
     $("#confirm-delete")?.addEventListener("click", () => {
       const fileId = backdrop.dataset.fileId;
-      M.setFiles(M.getFiles().filter((f) => f.id !== fileId));
+      const snapshot = M.getFiles();
+      const removed = snapshot.find((f) => f.id === fileId);
+      M.setFiles(snapshot.filter((f) => f.id !== fileId));
       backdrop.classList.remove("open");
       renderFiles(typeFilter);
-      showToast("File removed");
+      showToast("File removed", {
+        undo: () => {
+          if (!removed) return;
+          M.setFiles([removed, ...M.getFiles()]);
+          renderFiles(typeFilter);
+        },
+      });
     });
     backdrop?.addEventListener("click", (event) => {
       if (event.target === backdrop) backdrop.classList.remove("open");
+    });
+
+    $("#close-preview")?.addEventListener("click", () => $("#preview-backdrop")?.classList.remove("open"));
+    $("#preview-backdrop")?.addEventListener("click", (event) => {
+      if (event.target === $("#preview-backdrop")) $("#preview-backdrop").classList.remove("open");
     });
   }
 
@@ -689,7 +1148,8 @@
     if (document.body.dataset.page !== "settings") return;
     const form = $("#settings-form");
     const settings = M.getSettings();
-    $("#fullName").value = settings.fullName;
+    const session = M.getSessionUser();
+    $("#fullName").value = settings.fullName || session.name;
     $("#jobTitle").value = settings.jobTitle;
     $("#department").value = settings.department;
     $("#timezone").value = settings.timezone;
@@ -697,6 +1157,13 @@
     $("#emailDigest").checked = settings.emailDigest;
     $("#pushAlerts").checked = settings.pushAlerts;
     $("#weeklySummary").checked = settings.weeklySummary;
+
+    const roleField = $("#access-role-display");
+    if (roleField) roleField.textContent = M.getAccessRole();
+
+    $("#theme")?.addEventListener("change", () => {
+      M.applyTheme($("#theme").value);
+    });
 
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -714,16 +1181,18 @@
       }
       if (!valid) return;
 
+      const theme = $("#theme").value;
       M.setSettings({
         fullName,
         jobTitle,
         department: $("#department").value,
         timezone: $("#timezone").value,
-        theme: $("#theme").value,
+        theme,
         emailDigest: $("#emailDigest").checked,
         pushAlerts: $("#pushAlerts").checked,
         weeklySummary: $("#weeklySummary").checked,
       });
+      M.applyTheme(theme);
       $("#settings-success").textContent = "Profile and preferences saved.";
       $("#settings-success").classList.add("visible");
       showToast("Settings saved");

@@ -73,6 +73,15 @@
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
+                  <p class="hint">Applies immediately; save to persist.</p>
+                </div>
+
+                <div class="switch-row">
+                  <div>
+                    <strong>Access role</strong>
+                    <p>Set by the account you signed in with (admin can approve)</p>
+                  </div>
+                  <strong id="access-role-display" data-testid="access-role-display">admin</strong>
                 </div>
 
                 <div class="switch-row">
@@ -127,6 +136,7 @@
       </div>
     </div>
     <script src="/js/store.js"></script>
+    <script src="/js/widgets.js"></script>
     <script src="/js/shell.js"></script>
     <script src="/js/app.js"></script>
   </body>

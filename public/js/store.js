@@ -3,20 +3,36 @@
     authSession: "meridian_auth",
     authLocal: "meridian_auth_local",
     remember: "meridian_remember",
+    accessRole: "meridian_access_role",
+    sessionUser: "meridian_session_user",
     requests: "meridian_requests",
     files: "meridian_files",
     settings: "meridian_settings",
     notifsRead: "meridian_notifs_read",
     messages: "meridian_messages",
+    devMode: "meridian_dev",
   };
 
-  const USER = {
-    name: "Alex Rivera",
-    email: "alex@northline.co",
-    role: "Operations",
-    initials: "AR",
-    password: "meridian123",
+  const ACCOUNTS = {
+    "alex@northline.co": {
+      name: "Alex Rivera",
+      email: "alex@northline.co",
+      role: "Operations",
+      accessRole: "admin",
+      initials: "AR",
+      password: "meridian123",
+    },
+    "viewer@northline.co": {
+      name: "Casey Viewer",
+      email: "viewer@northline.co",
+      role: "Analyst",
+      accessRole: "viewer",
+      initials: "CV",
+      password: "viewer123",
+    },
   };
+
+  const USER = ACCOUNTS["alex@northline.co"];
 
   const PEOPLE = [
     {
@@ -181,14 +197,17 @@
     {
       id: "REQ-1048",
       type: "Leave",
-      title: "PTO · Aug 22–26",
+      title: "PTO · Sep 15–19",
       requester: "Alex Rivera",
       status: "pending",
-      createdAt: "2026-08-12",
+      createdAt: "2026-09-01",
       priority: "normal",
       details: "Family travel; coverage arranged with Elena.",
-      startDate: "2026-08-22",
-      history: [{ at: "2026-08-12", action: "submitted" }],
+      startDate: "2026-09-15",
+      leaveStart: "2026-09-15",
+      leaveEnd: "2026-09-19",
+      tags: ["Travel"],
+      history: [{ at: "2026-09-01", action: "submitted" }],
     },
     {
       id: "REQ-1051",
@@ -225,7 +244,7 @@
     {
       id: "n1",
       title: "Leave request needs review",
-      body: "PTO · Aug 22–26 is awaiting approval",
+      body: "PTO · Sep 15–19 is awaiting approval",
       time: "2h ago",
       href: "/request.html?id=REQ-1048",
     },
@@ -273,15 +292,75 @@
     return sessionStorage.getItem(KEYS.authSession) === "1" || localStorage.getItem(KEYS.authLocal) === "1";
   }
 
-  function login(remember) {
+  function findAccount(email, password) {
+    const account = ACCOUNTS[String(email || "").trim().toLowerCase()];
+    if (!account || account.password !== password) return null;
+    return account;
+  }
+
+  function login(remember, account) {
+    const user = account || USER;
     sessionStorage.setItem(KEYS.authSession, "1");
-    if (remember) localStorage.setItem(KEYS.authLocal, "1");
-    else localStorage.removeItem(KEYS.authLocal);
+    sessionStorage.setItem(KEYS.accessRole, user.accessRole);
+    sessionStorage.setItem(KEYS.sessionUser, JSON.stringify(user));
+    if (remember) {
+      localStorage.setItem(KEYS.authLocal, "1");
+      localStorage.setItem(KEYS.accessRole, user.accessRole);
+      localStorage.setItem(KEYS.sessionUser, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(KEYS.authLocal);
+      localStorage.removeItem(KEYS.accessRole);
+      localStorage.removeItem(KEYS.sessionUser);
+    }
   }
 
   function logout() {
     sessionStorage.removeItem(KEYS.authSession);
+    sessionStorage.removeItem(KEYS.accessRole);
+    sessionStorage.removeItem(KEYS.sessionUser);
     localStorage.removeItem(KEYS.authLocal);
+    localStorage.removeItem(KEYS.accessRole);
+    localStorage.removeItem(KEYS.sessionUser);
+  }
+
+  function getSessionUser() {
+    try {
+      const raw = sessionStorage.getItem(KEYS.sessionUser) || localStorage.getItem(KEYS.sessionUser);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
+    return USER;
+  }
+
+  function getAccessRole() {
+    return (
+      sessionStorage.getItem(KEYS.accessRole) ||
+      localStorage.getItem(KEYS.accessRole) ||
+      getSessionUser().accessRole ||
+      "admin"
+    );
+  }
+
+  function canApprove() {
+    return getAccessRole() === "admin";
+  }
+
+  function isViewer() {
+    return getAccessRole() === "viewer";
+  }
+
+  function resolveTheme(theme) {
+    const mode = theme || getSettings().theme || "system";
+    if (mode === "dark" || mode === "light") return mode;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function applyTheme(theme) {
+    const resolved = resolveTheme(theme);
+    document.documentElement.setAttribute("data-theme", resolved);
+    document.documentElement.dataset.themeSetting = theme || getSettings().theme || "system";
+    return resolved;
   }
 
   function getRememberedEmail() {
@@ -378,7 +457,7 @@
       id: `m${Date.now()}`,
       body,
       at: new Date().toISOString(),
-      from: USER.name,
+      from: getSessionUser().name || USER.name,
     };
     list.push(entry);
     all[key] = list;
@@ -401,55 +480,200 @@
   function getState() {
     return {
       authed: isAuthed(),
-      user: { name: USER.name, email: USER.email, role: USER.role },
+      user: getSessionUser(),
+      accessRole: getAccessRole(),
+      canApprove: canApprove(),
       requests: getRequests(),
       files: getFiles(),
       settings: getSettings(),
       notifsRead: areNotifsRead(),
       messages: readJson(KEYS.messages, {}),
+      devMode: isDevMode(),
     };
   }
 
+  function isDevMode() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("dev") === "1") {
+      localStorage.setItem(KEYS.devMode, "1");
+      return true;
+    }
+    if (params.get("dev") === "0") {
+      localStorage.removeItem(KEYS.devMode);
+      return false;
+    }
+    return localStorage.getItem(KEYS.devMode) === "1";
+  }
+
+  function enableDevMode(on = true) {
+    if (on) localStorage.setItem(KEYS.devMode, "1");
+    else localStorage.removeItem(KEYS.devMode);
+    return isDevMode();
+  }
+
+  function buildManyPending(count = 20) {
+    const rows = [];
+    for (let i = 0; i < count; i++) {
+      rows.push({
+        id: `REQ-${2000 + i}`,
+        type: i % 2 === 0 ? "Access" : "Expense",
+        title: `Bulk pending item ${i + 1}`,
+        requester: "Alex Rivera",
+        status: i % 3 === 0 ? "submitted" : "pending",
+        createdAt: "2026-09-01",
+        priority: i % 4 === 0 ? "high" : "normal",
+        details: "Seeded for pagination / kanban stress tests.",
+        startDate: "2026-09-20",
+        tags: i % 2 === 0 ? ["Urgent"] : ["Compliance"],
+        history: [{ at: "2026-09-01", action: "submitted" }],
+      });
+    }
+    return rows;
+  }
+
+  function leaveThisMonth() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const start = `${y}-${m}-12`;
+    const end = `${y}-${m}-16`;
+    return [
+      {
+        id: "REQ-3001",
+        type: "Leave",
+        title: `PTO · ${m}/12–16`,
+        requester: "Alex Rivera",
+        status: "pending",
+        createdAt: `${y}-${m}-01`,
+        priority: "normal",
+        details: "Seeded leave for current calendar month.",
+        startDate: start,
+        leaveStart: start,
+        leaveEnd: end,
+        tags: ["Travel"],
+        history: [{ at: `${y}-${m}-01`, action: "submitted" }],
+      },
+      ...DEFAULT_REQUESTS.filter((r) => r.type !== "Leave"),
+    ];
+  }
+
+  const PRESETS = {
+    clean: {
+      label: "Clean slate",
+      description: "Reset all data to defaults",
+      run: () => reset(),
+    },
+    emptyRequests: {
+      label: "Empty requests",
+      description: "No requests in the workspace",
+      run: () => seed({ requests: [] }),
+    },
+    manyPending: {
+      label: "Many pending",
+      description: "20 pending/submitted requests",
+      run: () => seed({ requests: buildManyPending(20) }),
+    },
+    leaveThisMonth: {
+      label: "Leave this month",
+      description: "Leave spanning mid-month on the calendar",
+      run: () => seed({ requests: leaveThisMonth() }),
+    },
+    emptyFiles: {
+      label: "Empty files",
+      description: "Clear the file library",
+      run: () => seed({ files: [], requests: getRequests(), settings: getSettings() }),
+    },
+    darkTheme: {
+      label: "Dark theme",
+      description: "Force dark theme in settings",
+      run: () => {
+        const settings = { ...getSettings(), theme: "dark" };
+        seed({ settings, requests: getRequests(), files: getFiles() });
+        applyTheme("dark");
+        return getState();
+      },
+    },
+  };
+
+  function applyPreset(name) {
+    const preset = PRESETS[name];
+    if (!preset) throw new Error(`Unknown preset: ${name}`);
+    return preset.run();
+  }
+
   function seed(overrides = {}) {
-    writeJson(KEYS.requests, overrides.requests || DEFAULT_REQUESTS);
-    writeJson(KEYS.files, overrides.files || DEFAULT_FILES);
-    writeJson(KEYS.settings, overrides.settings || DEFAULT_SETTINGS);
-    writeJson(KEYS.messages, overrides.messages || {});
+    writeJson(KEYS.requests, overrides.requests !== undefined ? overrides.requests : DEFAULT_REQUESTS);
+    writeJson(KEYS.files, overrides.files !== undefined ? overrides.files : DEFAULT_FILES);
+    writeJson(KEYS.settings, overrides.settings !== undefined ? overrides.settings : DEFAULT_SETTINGS);
+    writeJson(KEYS.messages, overrides.messages !== undefined ? overrides.messages : {});
     if (overrides.notifsRead === true) localStorage.setItem(KEYS.notifsRead, "1");
     else if (overrides.notifsRead === false) localStorage.removeItem(KEYS.notifsRead);
+    if (overrides.settings?.theme) applyTheme(overrides.settings.theme);
     return getState();
   }
 
   function reset() {
     Object.values(KEYS).forEach((key) => {
+      if (key === KEYS.devMode) return;
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     });
-    return seed();
+    const state = seed();
+    applyTheme(getSettings().theme);
+    return state;
   }
 
   function handleResetQuery() {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("reset") !== "1") return false;
-    reset();
-    params.delete("reset");
+    let changed = false;
+    if (params.get("reset") === "1") {
+      reset();
+      params.delete("reset");
+      changed = true;
+    }
+    if (params.get("dev") === "1" || params.get("dev") === "0") {
+      isDevMode();
+      params.delete("dev");
+      changed = true;
+    }
+    if (params.get("preset")) {
+      const name = params.get("preset");
+      try {
+        applyPreset(name);
+      } catch {
+        /* ignore unknown */
+      }
+      params.delete("preset");
+      changed = true;
+    }
+    if (!changed) return false;
     const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
     window.history.replaceState({}, "", next);
     return true;
   }
 
   ensureSeeded();
+  applyTheme(getSettings().theme);
 
   const Meridian = {
     USER,
+    ACCOUNTS,
     KEYS,
     PEOPLE,
     DEFAULT_REQUESTS,
     DEFAULT_FILES,
     DEFAULT_SETTINGS,
+    PRESETS,
     isAuthed,
+    findAccount,
     login,
     logout,
+    getSessionUser,
+    getAccessRole,
+    canApprove,
+    isViewer,
+    resolveTheme,
+    applyTheme,
     getRememberedEmail,
     setRememberedEmail,
     getPeople,
@@ -472,6 +696,9 @@
     getState,
     seed,
     reset,
+    applyPreset,
+    isDevMode,
+    enableDevMode,
     handleResetQuery,
   };
 

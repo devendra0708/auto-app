@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ops report frame</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0.85rem;
+        background: #f7f8fa;
+        min-height: 100%;
+      }
+      .toolbar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body data-page="report-frame">
+    <div class="toolbar" data-testid="report-toolbar">
+      <select id="report-range" data-testid="report-range">
+        <option value="7d">Last 7 days</option>
+        <option value="30d" selected>Last 30 days</option>
+        <option value="qtd">Quarter to date</option>
+      </select>
+      <button id="report-refresh" type="button" data-testid="report-refresh">Refresh</button>
+      <button id="report-export" class="secondary" type="button" data-testid="report-export">Export CSV</button>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table data-testid="report-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+              <th>Delta</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody" data-testid="report-tbody">
+            <tr><td>Open requests</td><td data-testid="report-open">12</td><td>+2</td></tr>
+            <tr><td>Avg approval time</td><td data-testid="report-avg">1.4d</td><td>-0.2d</td></tr>
+            <tr><td>Active people</td><td data-testid="report-people">8</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="hint" id="report-status" data-testid="report-status">Loaded · 30d</p>
+    <script>
+      const status = document.getElementById("report-status");
+      const range = document.getElementById("report-range");
+      document.getElementById("report-refresh").addEventListener("click", () => {
+        status.textContent = "Refreshing…";
+        setTimeout(() => {
+          document.getElementById("report-open").textContent = String(8 + Math.floor(Math.random() * 8));
+          status.textContent = "Loaded · " + range.value;
+        }, 800);
+      });
+      document.getElementById("report-export").addEventListener("click", () => {
+        status.textContent = "Export queued for " + range.value;
+      });
+      range.addEventListener("change", () => {
+        status.textContent = "Loaded · " + range.value;
+      });
+    </script>
+  </body>
+</html>
