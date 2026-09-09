@@ -23,15 +23,34 @@
             </div>
             <div class="actions">
               <button id="export-selected" class="secondary" type="button" data-testid="export-selected">Export selected</button>
-              <button id="open-invite" type="button" data-testid="open-invite">Invite person</button>
+              <button id="open-invite" class="approver-only" type="button" data-testid="open-invite">Invite person</button>
             </div>
           </div>
 
           <section class="panel">
             <div class="table-toolbar">
-              <div class="field">
-                <label for="people-search">Search</label>
-                <input id="people-search" type="search" placeholder="Name, email, role…" data-testid="people-search" />
+              <div class="field combobox" id="people-combobox" data-testid="people-combobox">
+                <label class="label-with-tip" for="people-search">
+                  Find person
+                  <button
+                    type="button"
+                    class="tooltip-trigger"
+                    data-tooltip="Type to filter, use arrows and Enter to select. Selecting opens the profile."
+                    data-tooltip-testid="tooltip-people-search"
+                    data-testid="tip-people-search"
+                    aria-label="About people search"
+                  >
+                    ?
+                  </button>
+                </label>
+                <input
+                  id="people-search"
+                  type="text"
+                  placeholder="Search by name, email, or role…"
+                  autocomplete="off"
+                  data-testid="people-search"
+                />
+                <div id="people-combobox-list" class="combobox-list" data-testid="people-combobox-list"></div>
               </div>
               <div class="field">
                 <label for="dept-filter">Department</label>
@@ -68,11 +87,47 @@
                 <thead>
                   <tr>
                     <th><input id="select-all" type="checkbox" data-testid="select-all" /></th>
-                    <th data-sort="name" data-testid="sort-name">Person</th>
-                    <th data-sort="dept" data-testid="sort-dept">Department</th>
+                    <th data-sort="name" data-testid="sort-name">
+                      Person
+                      <button
+                        type="button"
+                        class="tooltip-trigger"
+                        data-tooltip="Click column headers to sort ascending or descending."
+                        data-tooltip-testid="tooltip-sort-name"
+                        data-testid="tip-sort-name"
+                        aria-label="About person column"
+                      >
+                        ?
+                      </button>
+                    </th>
+                    <th data-sort="dept" data-testid="sort-dept">
+                      Department
+                      <button
+                        type="button"
+                        class="tooltip-trigger"
+                        data-tooltip="Org unit from the HRIS sync."
+                        data-tooltip-testid="tooltip-sort-dept"
+                        data-testid="tip-sort-dept"
+                        aria-label="About department column"
+                      >
+                        ?
+                      </button>
+                    </th>
                     <th data-sort="role" data-testid="sort-role">Role</th>
                     <th data-sort="location" data-testid="sort-location">Location</th>
-                    <th data-sort="status" data-testid="sort-status">Status</th>
+                    <th data-sort="status" data-testid="sort-status">
+                      Status
+                      <button
+                        type="button"
+                        class="tooltip-trigger"
+                        data-tooltip="Active = employed, Pending = onboarding, Inactive = left or on leave."
+                        data-tooltip-testid="tooltip-sort-status"
+                        data-testid="tip-sort-status"
+                        aria-label="About status column"
+                      >
+                        ?
+                      </button>
+                    </th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -122,6 +177,7 @@
     </div>
 
     <script src="/js/store.js"></script>
+    <script src="/js/widgets.js"></script>
     <script src="/js/shell.js"></script>
     <script src="/js/app.js"></script>
   </body>

@@ -6,7 +6,10 @@
     return root.querySelector(selector);
   }
 
-  function showToast(message) {
+  function showToast(message, options) {
+    if (window.MeridianWidgets?.showToast) {
+      return window.MeridianWidgets.showToast(message, options);
+    }
     let toast = $("#toast");
     if (!toast) {
       toast = document.createElement("div");
@@ -39,17 +42,23 @@
       { id: "people", href: "/people.html", label: "People", icon: "◉", testid: "nav-people" },
       { id: "requests", href: "/requests.html", label: "Requests", icon: "▣", testid: "nav-requests" },
       { id: "files", href: "/files.html", label: "Files", icon: "▤", testid: "nav-files" },
+      { id: "reports", href: "/reports.html", label: "Reports", icon: "▦", testid: "nav-reports" },
       { id: "settings", href: "/settings.html", label: "Settings", icon: "⚙", testid: "nav-settings" },
     ]
       .map((item) => {
-        const active = item.id === activePage || (activePage === "person" && item.id === "people") || (activePage === "request" && item.id === "requests");
+        const active =
+          item.id === activePage ||
+          (activePage === "person" && item.id === "people") ||
+          (activePage === "request" && item.id === "requests");
         return `<a href="${item.href}" data-nav="${item.id}" data-testid="${item.testid}" class="${active ? "active" : ""}"><span class="nav-icon">${item.icon}</span> ${item.label}</a>`;
       })
       .join("");
 
+    const session = M.getSessionUser();
     const settings = M.getSettings();
-    const displayName = settings.fullName || M.USER.name;
-    const initials = displayName
+    const displayName = session.name || settings.fullName || M.USER.name;
+    const roleLabel = `${M.getAccessRole()} · ${session.role || settings.department || ""}`;
+    const initials = (session.initials || displayName)
       .split(" ")
       .map((p) => p[0])
       .join("")
@@ -93,7 +102,7 @@
             <div class="relative">
               <button id="user-menu-btn" class="user-menu" type="button" data-testid="user-menu">
                 <span class="avatar">${initials}</span>
-                <span class="user-meta"><strong>${displayName}</strong><span>${settings.department || M.USER.role}</span></span>
+                <span class="user-meta"><strong>${displayName}</strong><span data-testid="access-role-label">${roleLabel}</span></span>
               </button>
               <div id="user-popover" class="popover menu-popover" data-testid="user-popover">
                 <button type="button" data-action="go-settings" data-testid="menu-settings">Account settings</button>
@@ -161,6 +170,12 @@
     });
   }
 
+  function applyAccessRole() {
+    const role = M.isAuthed() ? M.getAccessRole() : "";
+    document.body.dataset.accessRole = role;
+    document.documentElement.dataset.accessRole = role;
+  }
+
   function mountShell() {
     const mount = document.getElementById("app-shell");
     if (!mount) return;
@@ -174,6 +189,7 @@
     const shellMain = document.getElementById("shell-main");
     if (shellMain) shellMain.innerHTML = mainHtml;
     bindChrome();
+    applyAccessRole();
   }
 
   function requireAuth() {
@@ -187,11 +203,85 @@
     }
   }
 
+  function initDevPanel() {
+    if (!M.isDevMode()) return;
+    if (document.getElementById("dev-panel")) return;
+
+    const panel = document.createElement("div");
+    panel.id = "dev-panel";
+    panel.className = "dev-panel";
+    panel.setAttribute("data-testid", "dev-panel");
+    panel.innerHTML = `
+      <button type="button" class="dev-panel-toggle" data-testid="dev-panel-toggle" aria-expanded="false">Dev</button>
+      <div class="dev-panel-body hidden" data-testid="dev-panel-body">
+        <div class="dev-panel-header">
+          <strong>Seed presets</strong>
+          <button type="button" class="ghost" data-testid="dev-panel-close" aria-label="Close">×</button>
+        </div>
+        <p class="hint">For WDIO setup. Also: <code>?dev=1</code>, <code>?preset=clean</code></p>
+        <div class="dev-preset-list" data-testid="dev-preset-list"></div>
+        <div class="dev-panel-actions">
+          <button type="button" class="secondary" data-testid="dev-logout">Logout</button>
+          <button type="button" class="secondary" data-testid="dev-disable">Hide panel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(panel);
+
+    const body = panel.querySelector(".dev-panel-body");
+    const list = panel.querySelector(".dev-preset-list");
+    list.innerHTML = Object.entries(M.PRESETS)
+      .map(
+        ([key, preset]) => `
+        <button type="button" class="dev-preset" data-preset="${key}" data-testid="dev-preset-${key}">
+          <strong>${preset.label}</strong>
+          <span>${preset.description}</span>
+        </button>`
+      )
+      .join("");
+
+    const toggle = () => {
+      const open = body.classList.toggle("hidden") === false;
+      panel.querySelector(".dev-panel-toggle").setAttribute("aria-expanded", String(open));
+    };
+
+    panel.querySelector(".dev-panel-toggle").addEventListener("click", toggle);
+    panel.querySelector("[data-testid='dev-panel-close']").addEventListener("click", () => {
+      body.classList.add("hidden");
+      panel.querySelector(".dev-panel-toggle").setAttribute("aria-expanded", "false");
+    });
+
+    list.querySelectorAll("[data-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        M.applyPreset(btn.dataset.preset);
+        showToast(`Preset: ${btn.dataset.preset}`);
+        setTimeout(() => window.location.reload(), 350);
+      });
+    });
+
+    panel.querySelector("[data-testid='dev-logout']").addEventListener("click", () => {
+      M.logout();
+      window.location.href = "/index.html";
+    });
+
+    panel.querySelector("[data-testid='dev-disable']").addEventListener("click", () => {
+      M.enableDevMode(false);
+      panel.remove();
+      showToast("Dev panel disabled");
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     M.handleResetQuery();
+    M.applyTheme(M.getSettings().theme);
     requireAuth();
+    applyAccessRole();
     if (document.body.dataset.page !== "login") {
       mountShell();
     }
+    initDevPanel();
+
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if ((M.getSettings().theme || "system") === "system") M.applyTheme("system");
+    });
   });
 })();

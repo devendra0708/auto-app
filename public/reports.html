@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="reports">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <div class="page-header">
+            <div>
+              <h1 data-testid="reports-title">Reports</h1>
+              <p>Nested operations report (iframe) for frame-switching practice.</p>
+            </div>
+          </div>
+          <section class="panel">
+            <div class="panel-header"><h2>Operations summary</h2></div>
+            <div class="panel-body">
+              <iframe
+                class="report-frame"
+                title="Operations report"
+                src="/report-frame.html"
+                data-testid="report-iframe"
+              ></iframe>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script src="/js/store.js"></script>
+    <script src="/js/widgets.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

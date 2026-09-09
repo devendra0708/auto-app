@@ -1,7 +1,7 @@
 {
   "name": "auto-app",
   "version": "1.0.0",
-  "description": "Meridian — workplace hub demo app for automation testing",
+  "description": "Meridian — simple workplace hub SUT for demo UI test frameworks (Playwright, Selenium, WDIO, etc.)",
   "private": true,
   "scripts": {
     "start": "npx --yes serve public -l 3000",
