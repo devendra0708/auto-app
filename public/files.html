@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Files · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="files">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <div class="page-header">
+            <div>
+              <h1 data-testid="files-title">Files</h1>
+              <p>Shared documents for the Northline workspace.</p>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <section class="panel">
+              <div class="panel-header"><h2>Upload</h2></div>
+              <div class="panel-body">
+                <input id="file-input" class="hidden" type="file" multiple data-testid="file-input" />
+                <div id="dropzone" class="dropzone" data-testid="dropzone" role="button" tabindex="0">
+                  Drag files here or click to browse
+                </div>
+                <div id="upload-progress-wrap" class="hidden" style="margin-top: 1rem" data-testid="upload-progress-wrap">
+                  <div class="progress"><span id="upload-progress" data-testid="upload-progress"></span></div>
+                  <p class="hint" id="upload-progress-label" data-testid="upload-progress-label">Uploading…</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Library</h2>
+                <div class="field" style="margin: 0; min-width: 140px">
+                  <label class="hidden" for="file-type-filter">Type</label>
+                  <select id="file-type-filter" data-testid="file-type-filter">
+                    <option value="all">All types</option>
+                    <option value="PDF">PDF</option>
+                    <option value="DOC">DOC</option>
+                    <option value="PNG">PNG</option>
+                  </select>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div id="file-list" data-testid="file-list"></div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div id="confirm-delete-backdrop" class="modal-backdrop" data-testid="confirm-delete-backdrop">
+      <div class="modal" role="dialog" aria-modal="true" data-testid="confirm-delete-modal">
+        <h3>Remove file?</h3>
+        <p>This will remove <strong id="confirm-file-name">this file</strong> from the workspace library.</p>
+        <div class="actions">
+          <button id="confirm-delete" class="danger" type="button" data-testid="confirm-delete">Remove</button>
+          <button id="cancel-delete" class="secondary" type="button" data-testid="cancel-delete">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/store.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

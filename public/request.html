@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="request">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <nav class="breadcrumbs" data-testid="breadcrumbs">
+            <a href="/requests.html" data-testid="crumb-requests">Requests</a>
+            <span>/</span>
+            <span id="crumb-id" data-testid="crumb-id">Detail</span>
+          </nav>
+
+          <div id="request-missing" class="panel panel-body empty-state hidden" data-testid="request-missing">
+            Request not found. <a href="/requests.html">Back to requests</a>
+          </div>
+
+          <div id="request-detail" class="stack hidden">
+            <section class="panel">
+              <div class="panel-body">
+                <div class="detail-title-row">
+                  <div>
+                    <p class="eyebrow" id="detail-id" data-testid="detail-id">—</p>
+                    <h1 id="detail-title" data-testid="detail-title">—</h1>
+                  </div>
+                  <span id="detail-status" class="badge" data-testid="detail-status">—</span>
+                </div>
+                <p id="detail-details" class="lede-inline" data-testid="detail-details"></p>
+                <div class="actions" style="margin-top: 1rem">
+                  <button id="approve-request" type="button" data-testid="approve-request">Approve</button>
+                  <button id="reject-request" class="danger" type="button" data-testid="reject-request">Reject</button>
+                  <button id="cancel-request" class="secondary" type="button" data-testid="cancel-request">Cancel</button>
+                </div>
+              </div>
+            </section>
+
+            <div class="grid-2">
+              <section class="panel">
+                <div class="panel-header"><h2>Details</h2></div>
+                <div class="panel-body detail-grid">
+                  <div>
+                    <div class="detail-label">Type</div>
+                    <div id="detail-type" data-testid="detail-type">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Priority</div>
+                    <div id="detail-priority" data-testid="detail-priority">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Requester</div>
+                    <div id="detail-requester" data-testid="detail-requester">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Needed by</div>
+                    <div id="detail-date" data-testid="detail-date">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Created</div>
+                    <div id="detail-created" data-testid="detail-created">—</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header"><h2>History</h2></div>
+                <div class="panel-body">
+                  <ul id="detail-history" class="history-list" data-testid="detail-history"></ul>
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="/js/store.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

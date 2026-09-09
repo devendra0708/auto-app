@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northline Policy</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 1rem 1.1rem;
+        background: #f7f8fa;
+        min-height: 100%;
+      }
+      h2 {
+        margin: 0 0 0.5rem;
+        font-family: var(--display);
+        font-size: 1.05rem;
+      }
+      p {
+        margin: 0 0 0.75rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body data-page="policy">
+    <h2 data-testid="policy-title">Acceptable use &amp; travel</h2>
+    <p data-testid="policy-body">
+      Employees must submit expense requests within 14 days of purchase. International travel requires manager approval
+      before booking. Shared files may not include customer secrets.
+    </p>
+    <div class="field">
+      <label for="policy-ack">Acknowledge</label>
+      <input id="policy-ack" type="text" placeholder="Type your name" data-testid="policy-ack" />
+    </div>
+    <button id="policy-ack-btn" type="button" data-testid="policy-ack-btn">I acknowledge</button>
+    <div id="policy-ack-result" class="success-banner" data-testid="policy-ack-result"></div>
+    <script>
+      document.getElementById("policy-ack-btn").addEventListener("click", () => {
+        const name = document.getElementById("policy-ack").value.trim() || "Team member";
+        const result = document.getElementById("policy-ack-result");
+        result.textContent = "Acknowledged by " + name;
+        result.classList.add("visible");
+      });
+    </script>
+  </body>
+</html>

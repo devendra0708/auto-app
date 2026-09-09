@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="home">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <div class="page-header">
+            <div>
+              <p class="eyebrow">Good morning</p>
+              <h1 id="home-title" data-testid="home-title">Welcome back, Alex</h1>
+              <p>Here’s what’s happening across Northline today.</p>
+            </div>
+            <div class="actions">
+              <a class="btn" href="/requests.html" data-testid="cta-new-request">New request</a>
+              <a class="btn secondary" href="/people.html" data-testid="cta-view-people">View directory</a>
+            </div>
+          </div>
+
+          <div class="grid-4" style="margin-bottom: 1rem">
+            <div class="stat-card">
+              <div class="label">Active people</div>
+              <div class="value" id="stat-people" data-testid="stat-people">0</div>
+              <div class="delta">Directory synced</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Open requests</div>
+              <div class="value" id="stat-requests" data-testid="stat-requests">0</div>
+              <div class="delta">Needs attention</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Shared files</div>
+              <div class="value" id="stat-files" data-testid="stat-files">0</div>
+              <div class="delta">Workspace library</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Workspace</div>
+              <div class="value" style="font-size: 1.35rem">Northline</div>
+              <div class="delta">Operations hub</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <section class="panel">
+              <div class="panel-header"><h2>Recent activity</h2></div>
+              <div class="panel-body">
+                <div id="activity-feed" class="feed" data-testid="activity-feed"></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header"><h2>Quick actions</h2></div>
+              <div class="panel-body">
+                <div class="quick-actions">
+                  <a class="quick-action" href="/requests.html" data-testid="quick-request">Submit a request <span>→</span></a>
+                  <a class="quick-action" href="/people.html" data-testid="quick-people">Browse people <span>→</span></a>
+                  <a class="quick-action" href="/files.html" data-testid="quick-files">Upload a file <span>→</span></a>
+                  <a class="quick-action" href="/settings.html" data-testid="quick-settings">Update preferences <span>→</span></a>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="/js/store.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

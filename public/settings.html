@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="settings">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <div class="page-header">
+            <div>
+              <h1 data-testid="settings-title">Settings</h1>
+              <p>Manage your profile, notifications, and workspace preferences.</p>
+            </div>
+          </div>
+
+          <form id="settings-form" class="stack" data-testid="settings-form" novalidate>
+            <section class="panel">
+              <div class="panel-header"><h2>Profile</h2></div>
+              <div class="panel-body">
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="fullName">Full name</label>
+                    <input id="fullName" name="fullName" type="text" data-testid="full-name" />
+                    <div class="field-error" data-field-error="fullName" data-testid="full-name-error"></div>
+                  </div>
+                  <div class="field">
+                    <label for="jobTitle">Job title</label>
+                    <input id="jobTitle" name="jobTitle" type="text" data-testid="job-title" />
+                    <div class="field-error" data-field-error="jobTitle" data-testid="job-title-error"></div>
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="department">Department</label>
+                    <select id="department" name="department" data-testid="department">
+                      <option value="Operations">Operations</option>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Quality">Quality</option>
+                      <option value="Product">Product</option>
+                      <option value="People">People</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="timezone">Timezone</label>
+                    <select id="timezone" name="timezone" data-testid="timezone">
+                      <option value="IST">IST · India</option>
+                      <option value="PST">PST · US Pacific</option>
+                      <option value="EST">EST · US Eastern</option>
+                      <option value="GMT">GMT · London</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header"><h2>Preferences</h2></div>
+              <div class="panel-body">
+                <div class="field">
+                  <label for="theme">Theme</label>
+                  <select id="theme" name="theme" data-testid="theme">
+                    <option value="system">System</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </div>
+
+                <div class="switch-row">
+                  <div>
+                    <strong>Email digest</strong>
+                    <p>Daily summary of requests and mentions</p>
+                  </div>
+                  <input id="emailDigest" type="checkbox" data-testid="email-digest" />
+                </div>
+                <div class="switch-row">
+                  <div>
+                    <strong>Push alerts</strong>
+                    <p>Desktop notifications for approvals</p>
+                  </div>
+                  <input id="pushAlerts" type="checkbox" data-testid="push-alerts" />
+                </div>
+                <div class="switch-row">
+                  <div>
+                    <strong>Weekly summary</strong>
+                    <p>Monday recap of workspace activity</p>
+                  </div>
+                  <input id="weeklySummary" type="checkbox" data-testid="weekly-summary" />
+                </div>
+              </div>
+            </section>
+
+            <div class="actions">
+              <button type="submit" data-testid="save-settings">Save changes</button>
+            </div>
+            <div id="settings-success" class="success-banner" data-testid="settings-success"></div>
+          </form>
+
+          <section class="panel" style="margin-top: 1rem">
+            <div class="panel-header">
+              <h2>Company policy</h2>
+              <button id="load-policy" class="secondary" type="button" data-testid="load-policy">Load latest policy</button>
+            </div>
+            <div class="panel-body">
+              <div id="policy-loader" class="loader hidden" data-testid="policy-loader"></div>
+              <div id="policy-content" class="hidden" data-testid="policy-content">
+                <iframe
+                  class="iframe-box"
+                  title="Northline policy"
+                  src="/policy.html"
+                  data-testid="policy-iframe"
+                ></iframe>
+              </div>
+              <p class="hint">Policies load on demand from the compliance service.</p>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script src="/js/store.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

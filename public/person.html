@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Person · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="person">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <nav class="breadcrumbs" data-testid="breadcrumbs">
+            <a href="/people.html" data-testid="crumb-people">People</a>
+            <span>/</span>
+            <span id="crumb-name" data-testid="crumb-name">Profile</span>
+          </nav>
+
+          <div id="person-missing" class="panel panel-body empty-state hidden" data-testid="person-missing">
+            Person not found. <a href="/people.html">Back to directory</a>
+          </div>
+
+          <div id="person-detail" class="stack hidden">
+            <section class="panel">
+              <div class="panel-body detail-hero">
+                <div class="avatar avatar-lg" id="person-avatar" data-testid="person-avatar">?</div>
+                <div>
+                  <div class="detail-title-row">
+                    <h1 id="person-name" data-testid="person-name">—</h1>
+                    <span id="person-status" class="badge" data-testid="person-status">—</span>
+                  </div>
+                  <p id="person-about" class="lede-inline" data-testid="person-about"></p>
+                </div>
+              </div>
+            </section>
+
+            <div class="grid-2">
+              <section class="panel">
+                <div class="panel-header"><h2>Profile</h2></div>
+                <div class="panel-body detail-grid">
+                  <div>
+                    <div class="detail-label">Email</div>
+                    <div id="person-email" data-testid="person-email">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Department</div>
+                    <div id="person-dept" data-testid="person-dept">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Role</div>
+                    <div id="person-role" data-testid="person-role">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Location</div>
+                    <div id="person-location" data-testid="person-location">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Phone</div>
+                    <div id="person-phone" data-testid="person-phone">—</div>
+                  </div>
+                  <div>
+                    <div class="detail-label">Joined</div>
+                    <div id="person-joined" data-testid="person-joined">—</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header"><h2>Message</h2></div>
+                <div class="panel-body">
+                  <form id="message-form" data-testid="message-form" novalidate>
+                    <div class="field">
+                      <label for="message-body">Write a message</label>
+                      <textarea id="message-body" name="message-body" data-testid="message-body" placeholder="Say hello…"></textarea>
+                      <div class="field-error" data-field-error="message-body" data-testid="message-body-error"></div>
+                    </div>
+                    <div class="actions">
+                      <button type="submit" data-testid="person-message-send">Send message</button>
+                    </div>
+                  </form>
+                  <div id="message-list" class="message-list" data-testid="message-list"></div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="/js/store.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requests · Meridian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,560&family=IBM+Plex+Mono:wght@500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="requests">
+    <div id="app-shell">
+      <div data-shell-main>
+        <main class="main">
+          <div class="page-header">
+            <div>
+              <h1 data-testid="requests-title">Requests</h1>
+              <p>Submit leave, access, or expense requests and track their status.</p>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="tabs" role="tablist" data-testid="request-tabs">
+              <button class="tab-btn active" type="button" data-tab="tab-new" data-testid="tab-new">New request</button>
+              <button class="tab-btn" type="button" data-tab="tab-list" data-testid="tab-list">My requests</button>
+            </div>
+
+            <div id="tab-new" class="tab-panel active panel-body" data-testid="panel-new">
+              <form id="request-form" data-testid="request-form" novalidate>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="title">Title</label>
+                    <input id="title" name="title" type="text" placeholder="Short summary" data-testid="request-title" />
+                    <div class="field-error" data-field-error="title" data-testid="title-error"></div>
+                  </div>
+                  <div class="field">
+                    <label for="type">Type</label>
+                    <select id="type" name="type" data-testid="request-type">
+                      <option value="">Select type</option>
+                      <option value="Leave">Leave</option>
+                      <option value="Access">Access</option>
+                      <option value="Expense">Expense</option>
+                      <option value="Equipment">Equipment</option>
+                    </select>
+                    <div class="field-error" data-field-error="type" data-testid="type-error"></div>
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="startDate">Needed by</label>
+                    <input id="startDate" name="startDate" type="date" data-testid="request-date" />
+                  </div>
+                  <div class="field">
+                    <label>Priority</label>
+                    <div class="radio-row" data-testid="priority-group">
+                      <label><input type="radio" name="priority" value="low" data-testid="priority-low" /> Low</label>
+                      <label><input type="radio" name="priority" value="normal" checked data-testid="priority-normal" /> Normal</label>
+                      <label><input type="radio" name="priority" value="high" data-testid="priority-high" /> High</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="details">Details</label>
+                  <textarea id="details" name="details" placeholder="Context for reviewers" data-testid="request-details"></textarea>
+                </div>
+
+                <div class="field">
+                  <label class="checkbox-row">
+                    <input type="checkbox" name="terms" data-testid="request-terms" />
+                    I confirm this request follows Northline policy
+                  </label>
+                  <div class="field-error" data-field-error="terms" data-testid="terms-error"></div>
+                </div>
+
+                <div class="actions">
+                  <button id="submit-request" type="submit" data-testid="submit-request">Submit request</button>
+                  <button id="reset-request" class="secondary" type="button" data-testid="reset-request">Clear</button>
+                  <div id="request-loader" class="loader hidden" data-testid="request-loader"></div>
+                </div>
+                <div id="request-success" class="success-banner" data-testid="request-success"></div>
+              </form>
+            </div>
+
+            <div id="tab-list" class="tab-panel panel-body" data-testid="panel-list">
+              <div id="request-list" data-testid="request-list"></div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script src="/js/store.js"></script>
+    <script src="/js/shell.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>
